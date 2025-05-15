@@ -12,49 +12,68 @@ async def get_cluster_status():
     获取大数据集群状态，包括设备数、核心数、内存、存储等信息
     """
     # 模拟集群状态数据
-    status = {
-        "totalDevices": random.randint(5, 20),
-        "activeCores": random.randint(40, 150),
-        "totalCores": random.randint(160, 200),
-        "totalMemory": f"{random.randint(500, 1000)}GB",
-        "availableMemory": f"{random.randint(100, 400)}GB",
-        "totalStorage": f"{random.randint(50, 200)}TB",
-        "usedStorage": f"{random.randint(10, 100)}TB",
-        "usagePercent": random.uniform(30, 90),
-        # "services": [
-        #     {
-        #         "name": "HDFS",
-        #         "status": "健康",
-        #         "uptime": "30天12小时45分钟",
-        #         "nodes": random.randint(3, 10),
-        #     },
-        #     {
-        #         "name": "YARN",
-        #         "status": "健康",
-        #         "uptime": "28天9小时30分钟",
-        #         "activeApplications": random.randint(1, 20),
-        #     },
-        #     {
-        #         "name": "Spark",
-        #         "status": "健康",
-        #         "uptime": "25天7小时15分钟",
-        #         "activeJobs": random.randint(0, 10),
-        #     },
-        #     {
-        #         "name": "HBase",
-        #         "status": "健康",
-        #         "uptime": "27天5小时20分钟",
-        #         "regions": random.randint(10, 100),
-        #     },
-        #     {
-        #         "name": "Kafka",
-        #         "status": random.choice(["健康", "警告"]),
-        #         "uptime": "22天18小时50分钟",
-        #         "topics": random.randint(5, 50),
-        #         "messages": f"{random.randint(1, 999)}K/s",
-        #     },
-        # ],
-    }
+    status = [
+        {"key": "totalDevices", "name": "总设备数", "value": random.randint(5, 20)},
+        {"key": "activeCores", "name": "活跃核心数", "value": random.randint(40, 150)},
+        {"key": "totalCores", "name": "总核心数", "value": random.randint(160, 200)},
+        {
+            "key": "totalMemory",
+            "name": "总内存",
+            "value": f"{random.randint(500, 1000)}GB",
+        },
+        {
+            "key": "availableMemory",
+            "name": "可用内存",
+            "value": f"{random.randint(100, 400)}GB",
+        },
+        {
+            "key": "totalStorage",
+            "name": "总存储",
+            "value": f"{random.randint(50, 200)}TB",
+        },
+        {
+            "key": "usedStorage",
+            "name": "已用存储",
+            "value": f"{random.randint(10, 100)}TB",
+        },
+        {
+            "key": "usagePercent",
+            "name": "使用率",
+            "value": f"{random.uniform(30, 90)}%",
+        },
+    ]
+    # "services": [
+    #     {
+    #         "name": "HDFS",
+    #         "status": "健康",
+    #         "uptime": "30天12小时45分钟",
+    #         "nodes": random.randint(3, 10),
+    #     },
+    #     {
+    #         "name": "YARN",
+    #         "status": "健康",
+    #         "uptime": "28天9小时30分钟",
+    #         "activeApplications": random.randint(1, 20),
+    #     },
+    #     {
+    #         "name": "Spark",
+    #         "status": "健康",
+    #         "uptime": "25天7小时15分钟",
+    #         "activeJobs": random.randint(0, 10),
+    #     },
+    #     {
+    #         "name": "HBase",
+    #         "status": "健康",
+    #         "uptime": "27天5小时20分钟",
+    #         "regions": random.randint(10, 100),
+    #     },
+    #     {
+    #         "name": "Kafka",
+    #         "status": random.choice(["健康", "警告"]),
+    #         "uptime": "22天18小时50分钟",
+    #         "topics": random.randint(5, 50),
+    #         "messages": f"{random.randint(1, 999)}K/s",
+    #     },
 
     return {
         "code": 200,

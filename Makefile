@@ -1,4 +1,4 @@
-.PHONY: build-dev
+.PHONY: dev
 
-build-dev:
+dev:
 	docker compose -f docker-compose-dev.yml up -d --build
