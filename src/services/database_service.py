@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Optional
 
+from tortoise.expressions import Q
+
 from models.database import Database
 from schemas.database import DatabaseCreate, DatabaseUpdate
 from utils.enums import Status
@@ -15,6 +17,28 @@ class DatabaseService(CRUD[Database, DatabaseCreate, DatabaseUpdate]):
     def __init__(self):
         """初始化数据库服务，使用Database模型"""
         super().__init__(Database)
+
+    async def get_list(
+        self,
+        page: int,
+        page_size: int,
+        search: Q = Q(),
+        order: Optional[List[str]] = None,
+        prefetch: Optional[List[str]] = None,
+        exclude: list = None,
+    ):
+        """
+        获取所有数据库
+        """
+        total, objs = await super().get_list(
+            page=page,
+            page_size=page_size,
+            search=search,
+            order=order,
+            prefetch=prefetch,
+        )
+
+        return total, [await obj.to_dict(exclude_fields=exclude) for obj in objs]
 
     async def test_connection(self, database_id: int) -> Dict[str, Any]:
         """

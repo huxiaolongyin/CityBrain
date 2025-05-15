@@ -1,5 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 
+from tortoise.expressions import Q
+
 from models.collect import Collect
 from models.database import Database
 from schemas.collect import CollectCreate, CollectUpdate
@@ -16,6 +18,38 @@ class CollectService(CRUD[Collect, CollectCreate, CollectUpdate]):
     def __init__(self):
         """初始化数据同步服务，使用Collect模型"""
         super().__init__(Collect)
+
+    async def get_list(
+        self,
+        page: int,
+        page_size: int,
+        search: Q = Q(),
+        order: Optional[List[str]] = None,
+        prefetch: Optional[List[str]] = None,
+        exclude: list = None,
+    ):
+        """
+        获取所有数据同步任务
+        """
+        total, objs = await super().get_list(
+            page=page,
+            page_size=page_size,
+            search=search,
+            order=order,
+            prefetch=prefetch,
+        )
+        result = []
+        for obj in objs:
+            item = await obj.to_dict(exclude_fields=exclude)
+            source_database = await Database.get_or_none(id=obj.source_id)
+            target_database = await Database.get_or_none(id=obj.target_id)
+            item["sourceName"] = source_database.name
+            item["targetName"] = target_database.name
+            item["sourceType"] = source_database.type
+            item["targetType"] = target_database.type
+            result.append(item)
+
+        return total, result
 
     async def create(self, obj_in: CollectCreate, exclude=None):
         """

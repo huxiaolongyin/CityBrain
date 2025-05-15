@@ -14,79 +14,10 @@ from services import CollectService, collect_service
 router = APIRouter()
 
 
-# ============= 数据模型定义 =============
-class CollectTask(BaseModel):
-    id: int
-    name: str
-    type: SyncType
-    sourceId: int
-    sourceType: DataSourceType
-    sourceName: str
-    sourceTable: str
-    targetId: int
-    targetType: DataSourceType
-    targetName: str
-    targetTable: str
-    schedule: str
-    status: Status
-    createTime: str
-    updateTime: str
-
-
-class CreateCollectTask(BaseModel):
-    name: str
-    type: SyncType
-    sourceId: int
-    sourceType: DataSourceType
-    sourceName: str = ""
-    sourceTable: str
-    targetId: int
-    targetType: DataSourceType
-    targetName: str = ""
-    targetTable: str
-    schedule: str
-    status: Status = Status.ENABLED
-
-
-class UpdateCollectTask(BaseModel):
-    name: Optional[str] = None
-    type: Optional[SyncType] = None
-    sourceId: Optional[int] = None
-    sourceType: Optional[DataSourceType] = None
-    sourceName: Optional[str] = None
-    sourceTable: Optional[str] = None
-    targetId: Optional[int] = None
-    targetType: Optional[DataSourceType] = None
-    targetName: Optional[str] = None
-    targetTable: Optional[str] = None
-    schedule: Optional[str] = None
-    status: Optional[Status] = None
-
-
-class IndicatorData(BaseModel):
-    id: int
-    vin: str
-    createTime: str
-    data: Dict[str, Any]
-
-
-class ClusterStatus(BaseModel):
-    totalDevices: int
-    activeCores: int
-    totalCores: int
-    totalMemory: str
-    availableMemory: str
-    totalStorage: str
-    usedStorage: str
-    usagePercent: float
-    services: List[Dict[str, Any]]
-
-
 def get_collect_service():
     return collect_service
 
 
-# ============= 数据采集接口 =============
 @router.get("/collects", summary="获取数据同步任务列表")
 async def get_collect_list(
     type: SyncType = Query(None, description="数据同步类型(实时/离线)"),

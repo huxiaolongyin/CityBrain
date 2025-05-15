@@ -52,8 +52,7 @@ class CRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         search: Q = Q(),
         order: Optional[List[str]] = None,
         prefetch: Optional[List[str]] = None,
-        exclude: list = None,
-    ) -> Tuple[int, List[dict]]:
+    ) -> Tuple[int, List[ModelType]]:
         """
         获取多条记录
 
@@ -86,13 +85,7 @@ class CRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if order:
             query = query.order_by(*order)
 
-        objs = await query.all()
-        result = []
-        for obj in objs:
-            records = await obj.to_dict(exclude_fields=exclude)
-            result.append(records)
-
-        return total, result
+        return total, await query.all()
 
     def get_all(self) -> QuerySet[ModelType]:
         """

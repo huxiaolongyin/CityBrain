@@ -10,6 +10,7 @@
 ### Changed
 
 ### Fixed
+- 修复collects接口某些字段缺失的问题
 
 ### Removed
 
