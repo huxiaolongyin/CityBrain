@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks:
+      - city_brain_net
+
+  # Elasticsearch单节点
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.4
+    container_name: elasticsearch
+    environment:
+      - TZ=Asia/Shanghai
+      - node.name=es01
+      - cluster.name=city-brain-dev
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - city_brain_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Kibana (可选，用于ES管理)
+  # kibana:
+  #   image: kibana:8.7.0
+  #   container_name: kibana
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - city_brain_net
+
+  # Kafka (KRaft模式)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - TZ=Asia/Shanghai
+      - CLUSTER_ID=city-brain-dev
+      - KAFKA_NODE_ID=1
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_PROCESS_ROLES=broker,controller
+      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - city_brain_net
+    healthcheck:
+      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Spark主节点
+  spark-master:
+    image: apache/spark:3.5.5-python3
+    container_name: spark-master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    command: >
+      /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.master.Master'
+    # command: "/bin/bash -c 'spark-shell'"
+    environment:
+      - TZ=Asia/Shanghai
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+    networks:
+      - city_brain_net
+    volumes:
+      - spark_data:/opt/spark/work
+
+  # Spark工作节点
+  spark-worker:
+    image: apache/spark:3.5.5-python3
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+    command: >
+      /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077'
+    # command: "/bin/bash"
+    environment:
+      - TZ=Asia/Shanghai
+      - SPARK_MODE=worker
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+    networks:
+      - city_brain_net
+    volumes:
+      - ./data/spark_work:/opt/spark/work
+
+  # Airflow
+  airflow:
+    image: apache/airflow:3.0.0-python3.9
+    container_name: airflow
+    depends_on:
+      - postgres
+    environment:
+      - TZ=Asia/Shanghai
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8082:8080"
+    command: bash -c "airflow db migrate && airflow standalone"
+    networks:
+      - city_brain_net
+
+  # Airflow数据库
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      - TZ=Asia/Shanghai
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=12345HTW
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5555:5432"
+    networks:
+      - city_brain_net
+
+  # MongoDB (非结构化数据源)
+  mongodb:
+    image: mongo:7.0-jammy
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - TZ=Asia/Shanghai
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - city_brain_net
+  # # MySQL (结构化数据源)
+  # mysql:
+  #   image: mysql:8.0.36
+  #   container_name: mysql
+  #   ports:
+  #     - "3306:3306"
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=root
+  #     - MYSQL_DATABASE=citybrain
+  #     - MYSQL_USER=developer
+  #     - MYSQL_PASSWORD=developer
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #     - ./init-scripts:/docker-entrypoint-initdb.d
+  #   networks:
+  #     - city_brain_net
+
+  # 数据生成器 (模拟设备数据)
+  # data-generator:
+  #   build:
+  #     context: ./data-generator
+  #     dockerfile: Dockerfile
+  #   container_name: data-generator
+  #   depends_on:
+  #     - mongodb
+  #     - kafka
+  #     - mysql
+  #   networks:
+  #     - city_brain_net
+  #   volumes:
+  #     - ./data-generator:/app
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - MONGO_URI=mongodb://root:example@mongodb:27017/
+  #     - MYSQL_URI=mysql://developer:developer@mysql:3306/citybrain
+
+networks:
+  city_brain_net:
+    driver: bridge
+
+volumes:
+  es_data:
+  kafka_data:
+  mongo_data:
+  mysql_data:
+  postgres_data:
+  spark_data:

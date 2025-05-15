@@ -1,0 +1,17 @@
+pyyaml==6.0.2
+pyspark==3.5.1
+kafka-python==2.1.4
+fastapi==0.115.12
+uvicorn[standard]
+apscheduler==3.10.4
+
+# jwt令牌认证
+python-jose[cryptography]==3.4.0
+bcrypt==3.2.2
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# 数据库ORM
+tortoise-orm[asyncpg]
+# 自动迁移
+aerich
