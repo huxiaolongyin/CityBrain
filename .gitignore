@@ -26,7 +26,8 @@ docker_images
 ##########################
 部署文件
 tmp
-data_generator
+# data_generator
+jobs
 web
 config.yml
 migrations

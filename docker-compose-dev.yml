@@ -10,6 +10,9 @@ services:
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - city_brain_net
 
@@ -57,102 +60,102 @@ services:
   #     - city_brain_net
 
   # Kafka (KRaft模式)
-  kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka
-    ports:
-      - "9092:9092"
-    environment:
-      - TZ=Asia/Shanghai
-      - CLUSTER_ID=city-brain-dev
-      - KAFKA_NODE_ID=1
-      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
-      - KAFKA_PROCESS_ROLES=broker,controller
-      - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
-      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
-      - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
-      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
-      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    networks:
-      - city_brain_net
-    healthcheck:
-      test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # kafka:
+  #   image: confluentinc/cp-kafka:latest
+  #   container_name: kafka
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     - TZ=Asia/Shanghai
+  #     - CLUSTER_ID=city-brain-dev
+  #     - KAFKA_NODE_ID=1
+  #     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+  #     - KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  #     - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+  #     - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  #     - KAFKA_PROCESS_ROLES=broker,controller
+  #     - KAFKA_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+  #     - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+  #     - KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0
+  #     - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
+  #     - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+  #   volumes:
+  #     - kafka_data:/var/lib/kafka/data
+  #   networks:
+  #     - city_brain_net
+  #   healthcheck:
+  #     test: [ "CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list" ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
   # Spark主节点
-  spark-master:
-    image: apache/spark:3.5.5-python3
-    container_name: spark-master
-    ports:
-      - "7077:7077"
-      - "8080:8080"
-    command: >
-      /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.master.Master'
-    # command: "/bin/bash -c 'spark-shell'"
-    environment:
-      - TZ=Asia/Shanghai
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-    networks:
-      - city_brain_net
-    volumes:
-      - spark_data:/opt/spark/work
+  # spark-master:
+  #   image: apache/spark:3.5.5-python3
+  #   container_name: spark-master
+  #   ports:
+  #     - "7077:7077"
+  #     - "8080:8080"
+  #   command: >
+  #     /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.master.Master'
+  #   # command: "/bin/bash -c 'spark-shell'"
+  #   environment:
+  #     - TZ=Asia/Shanghai
+  #     - SPARK_MODE=master
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #   networks:
+  #     - city_brain_net
+  #   volumes:
+  #     - spark_data:/opt/spark/work
 
-  # Spark工作节点
-  spark-worker:
-    image: apache/spark:3.5.5-python3
-    container_name: spark-worker
-    depends_on:
-      - spark-master
-    ports:
-      - "8081:8081"
-    command: >
-      /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077'
-    # command: "/bin/bash"
-    environment:
-      - TZ=Asia/Shanghai
-      - SPARK_MODE=worker
-      - SPARK_WORKER_CORES=2
-      - SPARK_WORKER_MEMORY=2g
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-    networks:
-      - city_brain_net
-    volumes:
-      - ./data/spark_work:/opt/spark/work
+  # # Spark工作节点
+  # spark-worker: 
+  #   image: apache/spark:3.5.5-python3
+  #   container_name: spark-worker
+  #   depends_on:
+  #     - spark-master
+  #   ports:
+  #     - "8081:8081"
+  #   command: >
+  #     /bin/bash -c 'SPARK_CLASSPATH="libs/*" ../bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077'
+  #   # command: "/bin/bash"
+  #   environment:
+  #     - TZ=Asia/Shanghai
+  #     - SPARK_MODE=worker
+  #     - SPARK_WORKER_CORES=2
+  #     - SPARK_WORKER_MEMORY=2g
+  #     - SPARK_MASTER_URL=spark://spark-master:7077
+  #     - SPARK_RPC_AUTHENTICATION_ENABLED=no
+  #     - SPARK_RPC_ENCRYPTION_ENABLED=no
+  #   networks:
+  #     - city_brain_net
+  #   volumes:
+  #     - ./data/spark_work:/opt/spark/work
 
   # Airflow
-  airflow:
-    image: apache/airflow:3.0.0-python3.9
-    container_name: airflow
-    depends_on:
-      - postgres
-    environment:
-      - TZ=Asia/Shanghai
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres/airflow
-      - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
-      - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
-    volumes:
-      - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
-    ports:
-      - "8082:8080"
-    command: bash -c "airflow db migrate && airflow standalone"
-    networks:
-      - city_brain_net
+  # airflow:
+  #   image: apache/airflow:3.0.0-python3.9
+  #   container_name: airflow
+  #   depends_on:
+  #     - postgres
+  #   environment:
+  #     - TZ=Asia/Shanghai
+  #     - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+  #     - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow123@postgres/airflow
+  #     - AIRFLOW__CORE__FERNET_KEY=46BKJoQYlPPOexq0OhDZnIlNepKFf87WFwLbfzqDDho=
+  #     - AIRFLOW__CORE__LOAD_EXAMPLES=false
+  #     - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+  #     - ./logs:/opt/airflow/logs
+  #   ports:
+  #     - "8082:8080"
+  #   command: bash -c "airflow db migrate && airflow standalone"
+  #   networks:
+  #     - city_brain_net
 
-  # Airflow数据库
+  # 数据库
   postgres:
     image: postgres:13
     container_name: postgres
@@ -160,26 +163,95 @@ services:
       - TZ=Asia/Shanghai
       - POSTGRES_USER=admin
       - POSTGRES_PASSWORD=12345HTW
+      - POSTGRES_DB=city_brain
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     ports:
       - "5555:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin && PGPASSWORD=12345HTW psql -U admin -d city_brain -c 'SELECT 1'" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - city_brain_net
 
   # MongoDB (非结构化数据源)
-  mongodb:
+  mongo-keyfile:
     image: mongo:7.0-jammy
-    container_name: mongodb
+    volumes:
+      - mongo_keyfile:/opt/keyfile
+    command: bash -c "openssl rand -base64 756 > /opt/keyfile/mongodb-keyfile && chmod 400 /opt/keyfile/mongodb-keyfile && chown 999:999 /opt/keyfile/mongodb-keyfile && echo 'KeyFile生成完成'"
+    networks:
+      - city_brain_net
+
+  # 副本集节点1
+  mongo1:
+    image: mongo:7.0-jammy
+    container_name: mongo1
+    depends_on:
+      - mongo-keyfile
     ports:
       - "27017:27017"
     environment:
-      - TZ=Asia/Shanghai
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=example
     volumes:
-      - mongo_data:/data/db
+      - ./data/mongo1_data:/data/db
+      - mongo_keyfile:/opt/keyfile:ro
+    command: mongod --replSet rs0 --keyFile /opt/keyfile/mongodb-keyfile --bind_ip_all
+    networks:
+      - city_brain_net
+
+  # 副本集节点2
+  mongo2:
+    image: mongo:7.0-jammy
+    container_name: mongo2
+    depends_on:
+      - mongo-keyfile
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - ./data/mongo2_data:/data/db
+      - mongo_keyfile:/opt/keyfile:ro
+    command: mongod --replSet rs0 --keyFile /opt/keyfile/mongodb-keyfile --bind_ip_all
+    networks:
+      - city_brain_net
+
+  # 副本集节点3
+  mongo3:
+    image: mongo:7.0-jammy
+    container_name: mongo3
+    depends_on:
+      - mongo-keyfile
+    ports:
+      - "27019:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - ./data/mongo3_data:/data/db
+      - mongo_keyfile:/opt/keyfile:ro
+    command: mongod --replSet rs0 --keyFile /opt/keyfile/mongodb-keyfile --bind_ip_all
+    networks:
+      - city_brain_net
+
+  # 初始化副本集
+  mongo-setup:
+    image: mongo:7.0-jammy
+    container_name: mongo-setup
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    volumes:
+      - ./scripts:/scripts
+    entrypoint: [ "bash", "/scripts/setup-replica.sh" ]
+    restart: "no"
     networks:
       - city_brain_net
   # # MySQL (结构化数据源)
@@ -224,8 +296,5 @@ networks:
 
 volumes:
   es_data:
-  kafka_data:
-  mongo_data:
-  mysql_data:
   postgres_data:
-  spark_data:
+  mongo_keyfile:
