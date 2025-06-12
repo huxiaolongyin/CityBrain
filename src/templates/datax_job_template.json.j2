@@ -1,0 +1,53 @@
+{
+    "job": {
+        "setting": {
+            "speed": {"channel": {{ channel|default(1) }}},
+            "errorLimit": 
+                {
+                    "record": {{ error_limit_record|default(0) }}, 
+                    "percentage": {{ error_percentage|default(0.02) }}
+                }
+        },
+        "content": [
+            {
+                "reader": {
+                    "name": "{{ reader_name }}",
+                    "parameter": {
+                        "username": "{{ source_username }}",
+                        "password": "{{ source_password }}",
+                        "connection": [
+                            {
+                                "jdbcUrl": ["{{ source_jdbc_url }}"],
+                                "table": ["{{ source_table }}"]
+                            }
+                        ],
+                        "column": {{ source_columns|tojson }}
+                        {% if source_where %}
+                        ,"where": "{{ source_where }}"
+                        {% endif %}
+                    }
+                },
+                "writer": {
+                    "name": "{{ writer_name }}",
+                    "parameter": {
+                        "username": "{{ target_username }}",
+                        "password": "{{ target_password }}",
+                        "column": {{ target_columns|tojson }},
+                        {% if pre_sql %}
+                        "preSql": {{ pre_sql|tojson }},
+                        {% endif %}
+                        {% if post_sql %}
+                        "postSql": {{ post_sql|tojson }},
+                        {% endif %}
+                        "connection": [
+                            {
+                                "jdbcUrl": "{{ target_jdbc_url }}",
+                                "table": ["{{ target_table }}"]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}

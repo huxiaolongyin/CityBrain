@@ -5,7 +5,7 @@ echo "等待MongoDB实例启动..."
 sleep 10
 
 echo "初始化副本集..."
-mongosh --host mongo1:27017 -u root -p example --authenticationDatabase admin <<EOF
+mongo --host mongo1:27017 -u root -p example --authenticationDatabase admin <<EOF
   rs.initiate({
     _id: "rs0",
     members: [
@@ -16,17 +16,17 @@ mongosh --host mongo1:27017 -u root -p example --authenticationDatabase admin <<
   });
 
   // 等待副本集初始化
-  console.log("等待副本集初始化...");
+  print("等待副本集初始化...");
   let attempts = 30;
   while(attempts > 0) {
     try {
       const status = rs.status();
       if(status.members && status.members[0].stateStr === "PRIMARY") {
-        console.log("副本集初始化成功，主节点已选举");
+        print("副本集初始化成功，主节点已选举");
         break;
       }
     } catch(err) {
-      console.log("等待中: " + err.message);
+      print("等待中: " + err.message);
     }
     sleep(1000);
     attempts--;

@@ -31,3 +31,4 @@ jobs
 web
 config.yml
 migrations
+deploy

@@ -6,6 +6,8 @@
 ## [Unrelesed]
 
 ### Added
+- 新增 Collect 接口通过 jinja2 对接 Airflow + DATAX 服务
+- 新增 本设备状态统计
 
 ### Changed
 

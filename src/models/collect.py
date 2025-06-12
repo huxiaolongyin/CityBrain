@@ -26,6 +26,14 @@ class Collect(BaseModel, TimestampMixin):
     status = fields.IntEnumField(
         Status, default=Status.ENABLED, description="数据同步状态，1启用，0禁用"
     )
+    inc_or_full = fields.CharField(max_length=10, description="增量或者全量")
+    inc_column = fields.CharField(max_length=50, description="增量字段", null=True)
+    inc_column_type = fields.CharField(
+        max_length=50, description="增量字段类型", null=True
+    )
+    last_watermark = fields.CharField(
+        max_length=500, description="最后同步水印", null=True
+    )
 
     class Meta:
         table = "collects"

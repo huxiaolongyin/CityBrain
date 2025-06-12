@@ -1,9 +1,10 @@
 pyyaml==6.0.2
-pyspark==3.5.1
-kafka-python==2.1.4
+# pyspark==3.5.1
+# kafka-python==2.1.4
 fastapi==0.115.12
 uvicorn[standard]
-apscheduler==3.10.4
+# apscheduler==3.10.4
+jinja2
 
 # jwt令牌认证
 python-jose[cryptography]==3.4.0
@@ -15,3 +16,7 @@ python-multipart==0.0.20
 tortoise-orm[asyncpg]
 # 自动迁移
 aerich
+
+# # airflow 调度
+# apache-airflow
+# apache-airflow-providers-standard

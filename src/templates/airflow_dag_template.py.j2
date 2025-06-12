@@ -1,0 +1,169 @@
+import os
+from datetime import datetime, timedelta
+
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+{% if incremental_sync %}
+from airflow.operators.python import PythonOperator
+import psycopg2  # 或者你使用的其他数据库连接器
+{% endif %}
+
+# 定义默认参数
+default_args = {
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=5),
+}
+
+# 创建DAG
+dag = DAG(
+    "{{ dag_id }}",
+    default_args=default_args,
+    description="{{ description }}",
+    schedule="{{ schedule }}",
+    start_date=datetime(2023, 1, 1),
+    catchup=False,
+    tags={{ tags|tojson }},
+)
+
+# 获取宿主机的工作目录路径
+DATAX_PATH = os.environ.get("DATAX_PATH")
+
+# 定义执行DataX任务的Operator
+if not DATAX_PATH:
+    raise ValueError("DATAX_PATH environment variable is not set.")
+
+{% if incremental_sync %}
+# 增量同步所需的Python函数
+def get_last_watermark(**kwargs):
+    """获取上次同步的水印值"""
+    # 连接到元数据数据库
+    conn = psycopg2.connect(
+        host="{{ meta_db_host }}",
+        port="{{ meta_db_port }}",
+        database="{{ meta_db_name }}",
+        user="{{ meta_db_user }}",
+        password="{{ meta_db_password }}"
+    )
+    cursor = conn.cursor()
+    
+    # 查询最后的水印值
+    cursor.execute("SELECT last_watermark, inc_column_type FROM collects WHERE id = %s", ({{ collect_id }},))
+    last_watermark, inc_column_type = cursor.fetchone()
+    
+    # 关闭连接
+    cursor.close()
+    conn.close()
+    
+    # 获取当前处理时间作为本次同步的上限，如果是date，则使用昨日
+    from datetime import datetime, timedelta
+    if inc_column_type == 'datetime':
+        current_processing_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    elif inc_column_type == 'date':
+        current_processing_time = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    elif inc_column_type == 'int':
+        current_processing_time = ""  # 对于整数类型，可能不需要上限
+    else:
+        raise ValueError(f"不支持的增量列类型: {inc_column_type}")
+    
+    # 将值推送到XCom以供后续任务使用
+    kwargs['ti'].xcom_push(key='last_watermark', value=last_watermark)
+    kwargs['ti'].xcom_push(key='current_processing_time', value=current_processing_time)
+    kwargs['ti'].xcom_push(key='inc_column_type', value=inc_column_type)
+    
+    return {"last_watermark": last_watermark, "current_processing_time": current_processing_time}
+
+def update_watermark(**kwargs):
+    """更新水印值"""
+    ti = kwargs['ti']
+    current_processing_time = ti.xcom_pull(key='current_processing_time', task_ids='get_last_watermark')
+    inc_column_type = ti.xcom_pull(key='inc_column_type', task_ids='get_last_watermark')
+    
+    # 对于整数类型，可能不使用current_processing_time作为新水印
+    if inc_column_type == 'int':
+        # 这里可能需要查询数据源中的最大ID或其他方式获取新水印
+        # 简化示例，仅占位
+        new_watermark = current_processing_time or "0"
+    else:
+        new_watermark = current_processing_time
+    
+    # 连接到元数据数据库
+    conn = psycopg2.connect(
+        host="{{ meta_db_host }}",
+        port="{{ meta_db_port }}",
+        database="{{ meta_db_name }}",
+        user="{{ meta_db_user }}",
+        password="{{ meta_db_password }}"
+    )
+    cursor = conn.cursor()
+    
+    # 更新水印值
+    cursor.execute(
+        """
+        UPDATE collects 
+        SET last_watermark = %s
+        WHERE id = %s
+        """,
+        (new_watermark, {{ collect_id }})
+    )
+    conn.commit()
+    
+    # 关闭连接
+    cursor.close()
+    conn.close()
+    
+    return new_watermark
+
+# 获取上次水印任务
+get_last_watermark_task = PythonOperator(
+    task_id='get_last_watermark',
+    python_callable=get_last_watermark,
+    dag=dag,
+)
+
+# DataX执行任务，使用Jinja模板中的变量和XCom
+run_datax_task = BashOperator(
+    task_id='run_datax',
+    bash_command="""
+        docker run --rm \\
+        -v ${DATAX_PATH}/jobs:/data/jobs \\
+        -v ${DATAX_PATH}/libs/DmJdbcDriver18-8.1.3.73.jar:/opt/datax/plugin/reader/rdbmsreader/libs/DmJdbcDriver18-8.1.3.73.jar \\
+        --network {{ docker_network }} \\
+        {{ datax_image }} \\
+        /data/jobs/{{ datax_job_filename }} \\
+        -p "-Dlast_watermark='{{ '{{' }} ti.xcom_pull(task_ids='get_last_watermark', key='last_watermark') {{ '}}' }}' {% if inc_column_type != 'int' %}-Dcurrent_processing_time='{{ '{{' }} ti.xcom_pull(task_ids='get_last_watermark', key='current_processing_time') {{ '}}' }}'{% endif %}"
+    """,
+    dag=dag,
+)
+
+# 更新水印任务
+update_watermark_task = PythonOperator(
+    task_id='update_watermark',
+    python_callable=update_watermark,
+    dag=dag,
+)
+
+# 设置任务依赖关系
+get_last_watermark_task >> run_datax_task >> update_watermark_task
+
+{% else %}
+# 标准DataX执行任务
+run_datax = BashOperator(
+    task_id="{{ dag_id }}",
+    bash_command="""
+        docker run --rm \\
+        -v ${DATAX_PATH}/jobs:/data/jobs \\
+        -v ${DATAX_PATH}/libs/DmJdbcDriver18-8.1.3.73.jar:/opt/datax/plugin/reader/rdbmsreader/libs/DmJdbcDriver18-8.1.3.73.jar \\
+        --network {{ docker_network }} \\
+        {{ datax_image }} \\
+        /data/jobs/{{ datax_job_filename }}
+    """,
+    dag=dag,
+)
+
+# 设置任务依赖关系
+run_datax
+{% endif %}

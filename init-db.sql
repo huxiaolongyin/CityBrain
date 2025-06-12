@@ -14,6 +14,12 @@ CREATE DATABASE airflow;
 -- 创建设备管理用户
 CREATE USER airflow
 WITH
-    PASSWORD 'airflow123';
+    PASSWORD 'airflow@1313123';
 
 GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow;
+
+-- 创建采集数据库
+CREATE DATABASE ods;
+
+-- 创建指标数据库
+CREATE DATABASE ads;

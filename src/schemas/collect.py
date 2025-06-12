@@ -22,6 +22,18 @@ class CollectBase(BaseModel):
     status: Optional[int] = Field(
         Status.ENABLED.value, description="数据同步状态，1启用，0禁用"
     )
+    inc_or_full: str = Field(
+        "inc", description="增量或者全量, inc增量，full全量", alias="incOrFull"
+    )
+    inc_column: Optional[str] = Field(
+        "create_time", description="增量字段", alias="incColumn"
+    )
+    inc_column_type: Optional[str] = Field(
+        "datetime", description="增量字段类型", alias="incColumnType"
+    )
+    last_watermark: Optional[str] = Field(
+        None, description="上次同步最大值", alias="lastWatermark"
+    )
 
 
 # 创建Collect请求模型
@@ -51,3 +63,15 @@ class CollectUpdate(BaseModel):
     target_table: Optional[str] = Field(None, description="目标表", alias="targetTable")
     schedule: Optional[str] = Field(None, description="调度周期")
     status: Optional[int] = Field(None, description="数据同步状态，1启用，0禁用")
+    inc_or_full: Optional[str] = Field(
+        "inc", description="增量或者全量, inc增量，full全量", alias="incOrFull"
+    )
+    inc_column: Optional[str] = Field(
+        "create_time", description="增量字段", alias="incColumn"
+    )
+    inc_column_type: Optional[str] = Field(
+        "datetime", description="增量字段类型", alias="incColumnType"
+    )
+    last_watermark: Optional[str] = Field(
+        None, description="上次同步最大值", alias="lastWatermark"
+    )

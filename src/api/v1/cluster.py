@@ -1,5 +1,7 @@
 import random
+import socket
 
+import psutil
 from fastapi import APIRouter
 
 router = APIRouter()
@@ -11,69 +13,83 @@ async def get_cluster_status():
     """
     获取大数据集群状态，包括设备数、核心数、内存、存储等信息
     """
-    # 模拟集群状态数据
+    # 获取CPU信息
+    cpu_count_logical = psutil.cpu_count(logical=True)
+    cpu_count_physical = psutil.cpu_count(logical=False) or 1
+    cpu_percent = psutil.cpu_percent(interval=0.1)
+
+    # 获取内存信息
+    memory = psutil.virtual_memory()
+    total_memory_gb = round(memory.total / (1024**3), 2)
+    available_memory_gb = round(memory.available / (1024**3), 2)
+
+    # 获取存储信息
+    disk = psutil.disk_usage("/")
+    total_storage_gb = round(disk.total / (1024**3), 2)
+    used_storage_gb = round(disk.used / (1024**3), 2)
+
+    # 如果存储超过1TB，转换为TB单位
+    total_storage_str = f"{total_storage_gb}GB"
+    used_storage_str = f"{used_storage_gb}GB"
+    if total_storage_gb > 1024:
+        total_storage_str = f"{round(total_storage_gb/1024, 2)}TB"
+    if used_storage_gb > 1024:
+        used_storage_str = f"{round(used_storage_gb/1024, 2)}TB"
+
+    # 获取设备信息
+    try:
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+    except:
+        hostname = "未知主机"
+        ip_address = "0.0.0.0"
+
+    # 构建状态数据
     status = [
-        {"key": "totalDevices", "name": "总设备数", "value": random.randint(5, 20)},
-        {"key": "activeCores", "name": "活跃核心数", "value": random.randint(40, 150)},
-        {"key": "totalCores", "name": "总核心数", "value": random.randint(160, 200)},
+        {"key": "totalDevices", "name": "总设备数", "value": 1},  # 当前设备
+        {
+            "key": "activeCores",
+            "name": "活跃核心数",
+            "value": round(cpu_count_logical * (cpu_percent / 100)),
+        },
+        {"key": "totalCores", "name": "总核心数", "value": cpu_count_logical},
+        {"key": "physicalCores", "name": "物理核心数", "value": cpu_count_physical},
         {
             "key": "totalMemory",
             "name": "总内存",
-            "value": f"{random.randint(500, 1000)}GB",
+            "value": f"{total_memory_gb}GB",
         },
         {
             "key": "availableMemory",
             "name": "可用内存",
-            "value": f"{random.randint(100, 400)}GB",
+            "value": f"{available_memory_gb}GB",
         },
         {
             "key": "totalStorage",
             "name": "总存储",
-            "value": f"{random.randint(50, 200)}TB",
+            "value": total_storage_str,
         },
         {
             "key": "usedStorage",
             "name": "已用存储",
-            "value": f"{random.randint(10, 100)}TB",
+            "value": used_storage_str,
         },
         {
             "key": "usagePercent",
-            "name": "使用率",
-            "value": f"{random.uniform(30, 90)}%",
+            "name": "CPU使用率",
+            "value": f"{cpu_percent}%",
+        },
+        {
+            "key": "memoryUsage",
+            "name": "内存使用率",
+            "value": f"{memory.percent}%",
+        },
+        {
+            "key": "diskUsage",
+            "name": "存储使用率",
+            "value": f"{disk.percent}%",
         },
     ]
-    # "services": [
-    #     {
-    #         "name": "HDFS",
-    #         "status": "健康",
-    #         "uptime": "30天12小时45分钟",
-    #         "nodes": random.randint(3, 10),
-    #     },
-    #     {
-    #         "name": "YARN",
-    #         "status": "健康",
-    #         "uptime": "28天9小时30分钟",
-    #         "activeApplications": random.randint(1, 20),
-    #     },
-    #     {
-    #         "name": "Spark",
-    #         "status": "健康",
-    #         "uptime": "25天7小时15分钟",
-    #         "activeJobs": random.randint(0, 10),
-    #     },
-    #     {
-    #         "name": "HBase",
-    #         "status": "健康",
-    #         "uptime": "27天5小时20分钟",
-    #         "regions": random.randint(10, 100),
-    #     },
-    #     {
-    #         "name": "Kafka",
-    #         "status": random.choice(["健康", "警告"]),
-    #         "uptime": "22天18小时50分钟",
-    #         "topics": random.randint(5, 50),
-    #         "messages": f"{random.randint(1, 999)}K/s",
-    #     },
 
     return {
         "code": 200,

@@ -14,7 +14,8 @@ class Status(int, Enum):
 class DataSourceType(str, Enum):
     MONGODB = "MongoDB"
     MYSQL = "MySQL"
-    ELASTICSEARCH = "Elasticsearch"
+    DAMENG = "达梦数据库"
+    POSTGRES = "PostgreSQL"
     KAFKA = "Kafka"
     HDFS = "HDFS"
 
