@@ -57,9 +57,9 @@ async def query_indicator_data(
 
         # 根据指标类型生成不同的动态字段
         if indicator_type == IndicatorType.HISTORY_TRACK:
-            data_item["longitude"] = random.uniform(120.0, 121.0)
-            data_item["latitude"] = random.uniform(30.0, 31.0)
-            data_item["speed"] = random.uniform(0, 120)
+            data_item["longitude"] = random.uniform(118.28, 120.0)
+            data_item["latitude"] = random.uniform(25.25, 26.65)
+            data_item["speed"] = random.uniform(0, 35)
             data_item["direction"] = random.randint(0, 359)
             data_item["status"] = random.choice(["行驶中", "停车", "怠速"])
             data_item["timestamp"] = data_item["createTime"]
@@ -86,6 +86,91 @@ async def query_indicator_data(
                 ).strftime("%Y-%m-%d %H:%M:%S"),
             )
 
+        elif indicator_type == IndicatorType.ROBOT_TASK:
+            data_item["taskId"] = f"TASK{random.randint(1000, 9999)}"
+            data_item["taskName"] = random.choice(
+                ["清洁任务", "巡检任务", "配送任务", "维护任务"]
+            )
+            data_item["taskStatus"] = random.choice(
+                ["进行中", "已完成", "已暂停", "已取消", "待执行"]
+            )
+            data_item["startTime"] = (
+                datetime.datetime.strptime(data_item["createTime"], "%Y-%m-%d %H:%M:%S")
+                - datetime.timedelta(hours=random.randint(1, 24))
+            ).strftime("%Y-%m-%d %H:%M:%S")
+            data_item["endTime"] = (
+                datetime.datetime.strptime(data_item["createTime"], "%Y-%m-%d %H:%M:%S")
+                + datetime.timedelta(hours=random.randint(1, 12))
+            ).strftime("%Y-%m-%d %H:%M:%S")
+            data_item["duration"] = random.randint(30, 480)  # 分钟
+            data_item["completionRate"] = random.uniform(0, 100)
+            data_item["priority"] = random.choice(["高", "中", "低"])
+
+        elif indicator_type == IndicatorType.ABNORMAL_DATA:
+            data_item["anomalyType"] = random.choice(
+                ["温度异常", "电池异常", "传感器异常", "通信异常", "运行异常"]
+            )
+            data_item["severity"] = random.choice(["严重", "警告", "提示"])
+            data_item["description"] = random.choice(
+                [
+                    "设备温度超过正常范围",
+                    "电池电量异常下降",
+                    "传感器数据异常",
+                    "网络连接不稳定",
+                    "运行速度异常",
+                ]
+            )
+            data_item["detectedTime"] = data_item["createTime"]
+            data_item["resolvedTime"] = (
+                (
+                    datetime.datetime.strptime(
+                        data_item["createTime"], "%Y-%m-%d %H:%M:%S"
+                    )
+                    + datetime.timedelta(hours=random.randint(1, 48))
+                ).strftime("%Y-%m-%d %H:%M:%S")
+                if random.choice([True, False])
+                else None
+            )
+            data_item["isResolved"] = data_item["resolvedTime"] is not None
+            data_item["alertCount"] = random.randint(1, 10)
+
+        elif indicator_type == IndicatorType.ROBOT_EVENT:
+            data_item["eventType"] = random.choice(
+                [
+                    "启动",
+                    "停止",
+                    "充电开始",
+                    "充电结束",
+                    "任务开始",
+                    "任务完成",
+                    "故障",
+                    "维护",
+                ]
+            )
+            data_item["eventCode"] = f"EVT{random.randint(1000, 9999)}"
+            data_item["eventDescription"] = random.choice(
+                [
+                    "机器人正常启动",
+                    "机器人停止运行",
+                    "开始充电",
+                    "充电完成",
+                    "开始执行任务",
+                    "任务执行完成",
+                    "检测到故障",
+                    "进入维护模式",
+                ]
+            )
+            data_item["eventTime"] = data_item["createTime"]
+            data_item["location"] = random.choice(
+                ["A区", "B区", "C区", "充电站", "维护区"]
+            )
+            data_item["operator"] = random.choice(["系统", "管理员", "技术员", "自动"])
+            data_item["relatedTaskId"] = (
+                f"TASK{random.randint(1000, 9999)}"
+                if random.choice([True, False])
+                else None
+            )
+
         elif indicator_type == IndicatorType.ENVIRONMENT:
             data_item["temperature"] = random.uniform(-10, 40)
             data_item["humidity"] = random.uniform(20, 90)
@@ -95,6 +180,7 @@ async def query_indicator_data(
 
         sample_data.append(data_item)
 
+    # 定义列结构
     if indicator_type == IndicatorType.HISTORY_TRACK:
         columns = {
             "createTime": {
@@ -107,8 +193,12 @@ async def query_indicator_data(
             "latitude": {"type": "float", "description": "纬度"},
             "speed": {"type": "float", "description": "速度"},
             "direction": {"type": "float", "description": "方向"},
-            "status": {"type": "int", "description": "状态"},
-            "timestamp": {"type": "datetime", "format": "%Y-%m-%d %H:%M:%S"},
+            "status": {"type": "string", "description": "状态"},
+            "timestamp": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "时间戳",
+            },
         }
     elif indicator_type == IndicatorType.ROBOT_CHARGING:
         columns = {
@@ -144,6 +234,75 @@ async def query_indicator_data(
                 "format": "%Y-%m-%d %H:%M:%S",
                 "description": "最近激活时间",
             },
+        }
+    elif indicator_type == IndicatorType.ROBOT_TASK:
+        columns = {
+            "createTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "创建时间",
+            },
+            "vin": {"type": "string", "description": "识别码"},
+            "taskId": {"type": "string", "description": "任务ID"},
+            "taskName": {"type": "string", "description": "任务名称"},
+            "taskStatus": {"type": "string", "description": "任务状态"},
+            "startTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "开始时间",
+            },
+            "endTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "结束时间",
+            },
+            "duration": {"type": "int", "description": "持续时间(分钟)"},
+            "completionRate": {"type": "float", "description": "完成率"},
+            "priority": {"type": "string", "description": "优先级"},
+        }
+    elif indicator_type == IndicatorType.ABNORMAL_DATA:
+        columns = {
+            "createTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "创建时间",
+            },
+            "vin": {"type": "string", "description": "识别码"},
+            "anomalyType": {"type": "string", "description": "异常类型"},
+            "severity": {"type": "string", "description": "严重程度"},
+            "description": {"type": "string", "description": "异常描述"},
+            "detectedTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "检测时间",
+            },
+            "resolvedTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "解决时间",
+            },
+            "isResolved": {"type": "boolean", "description": "是否已解决"},
+            "alertCount": {"type": "int", "description": "告警次数"},
+        }
+    elif indicator_type == IndicatorType.ROBOT_EVENT:
+        columns = {
+            "createTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "创建时间",
+            },
+            "vin": {"type": "string", "description": "识别码"},
+            "eventType": {"type": "string", "description": "事件类型"},
+            "eventCode": {"type": "string", "description": "事件代码"},
+            "eventDescription": {"type": "string", "description": "事件描述"},
+            "eventTime": {
+                "type": "datetime",
+                "format": "%Y-%m-%d %H:%M:%S",
+                "description": "事件时间",
+            },
+            "location": {"type": "string", "description": "位置"},
+            "operator": {"type": "string", "description": "操作者"},
+            "relatedTaskId": {"type": "string", "description": "关联任务ID"},
         }
     elif indicator_type == IndicatorType.ENVIRONMENT:
         columns = {

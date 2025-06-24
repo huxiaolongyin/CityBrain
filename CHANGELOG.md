@@ -7,10 +7,12 @@
 
 ### Added
 - 新增 Collect 接口通过 jinja2 对接 Airflow + DATAX 服务
-- 新增 设备状态统计 
+- 新增 设备状态统计
+- 新增 机器人任务统计、异常数据监控分析、机器人事件 指标
 
 ### Changed
-- 
+- 集群设备统计改为 * 5
+
 
 ### Fixed
 - 修复 collects接口某些字段缺失的问题

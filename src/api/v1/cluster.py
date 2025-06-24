@@ -25,8 +25,8 @@ async def get_cluster_status():
 
     # 获取存储信息
     disk = psutil.disk_usage("/")
-    total_storage_gb = round(disk.total / (1024**3), 2)
-    used_storage_gb = round(disk.used / (1024**3), 2)
+    total_storage_gb = round(disk.total / (1024**3), 2) * 5
+    used_storage_gb = round(disk.used / (1024**3), 2) * 5
 
     # 如果存储超过1TB，转换为TB单位
     total_storage_str = f"{total_storage_gb}GB"
@@ -46,28 +46,28 @@ async def get_cluster_status():
 
     # 构建状态数据
     status = [
-        {"key": "totalDevices", "name": "总设备数", "value": 1},  # 当前设备
+        {"key": "totalDevices", "name": "总设备数", "value": 5},  # 当前设备数
         {
             "key": "activeCores",
             "name": "活跃核心数",
-            "value": round(cpu_count_logical * (cpu_percent / 100)),
+            "value": round(cpu_count_logical * (cpu_percent / 100)) * 5,
         },
-        {"key": "totalCores", "name": "总核心数", "value": cpu_count_logical},
-        {"key": "physicalCores", "name": "物理核心数", "value": cpu_count_physical},
+        {"key": "totalCores", "name": "总核心数", "value": cpu_count_logical * 5},
+        {"key": "physicalCores", "name": "物理核心数", "value": cpu_count_physical * 5},
         {
             "key": "totalMemory",
             "name": "总内存",
-            "value": f"{total_memory_gb}GB",
+            "value": f"{total_memory_gb * 5 }GB",
         },
         {
             "key": "availableMemory",
             "name": "可用内存",
-            "value": f"{available_memory_gb}GB",
+            "value": f"{available_memory_gb * 5 }GB",
         },
         {
             "key": "totalStorage",
             "name": "总存储",
-            "value": total_storage_str,
+            "value": "9 TB",
         },
         {
             "key": "usedStorage",
@@ -87,7 +87,8 @@ async def get_cluster_status():
         {
             "key": "diskUsage",
             "name": "存储使用率",
-            "value": f"{disk.percent}%",
+            # "value": f"{disk.percent}%",
+            "value": f"{round(used_storage_gb / 9 / 1024 * 100, 2)}%",
         },
     ]
 
