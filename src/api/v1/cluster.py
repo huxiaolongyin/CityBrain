@@ -62,7 +62,7 @@ async def get_cluster_status():
         {
             "key": "availableMemory",
             "name": "可用内存",
-            "value": f"{available_memory_gb * 5 }GB",
+            "value": f"{round(available_memory_gb * 5, 2)}GB",
         },
         {
             "key": "totalStorage",
