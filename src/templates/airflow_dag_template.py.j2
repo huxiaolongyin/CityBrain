@@ -128,12 +128,12 @@ get_last_watermark_task = PythonOperator(
 run_datax_task = BashOperator(
     task_id='run_datax',
     bash_command="""
-        docker run --rm \\
-        -v ${DATAX_PATH}/jobs:/data/jobs \\
-        -v ${DATAX_PATH}/libs/DmJdbcDriver18-8.1.3.73.jar:/opt/datax/plugin/reader/rdbmsreader/libs/DmJdbcDriver18-8.1.3.73.jar \\
-        --network {{ docker_network }} \\
-        {{ datax_image }} \\
-        /data/jobs/{{ datax_job_filename }} \\
+        docker run --rm \
+        -v ${DATAX_PATH}/jobs:/data/jobs \
+        -v ${DATAX_PATH}/libs/DmJdbcDriver18-8.1.3.73.jar:/opt/datax/plugin/reader/rdbmsreader/libs/DmJdbcDriver18-8.1.3.73.jar \
+        --network {{ docker_network }} \
+        {{ datax_image }} \
+        /data/jobs/{{ datax_job_filename }} \
         -p "-Dlast_watermark='{{ '{{' }} ti.xcom_pull(task_ids='get_last_watermark', key='last_watermark') {{ '}}' }}' {% if inc_column_type != 'int' %}-Dcurrent_processing_time='{{ '{{' }} ti.xcom_pull(task_ids='get_last_watermark', key='current_processing_time') {{ '}}' }}'{% endif %}"
     """,
     dag=dag,

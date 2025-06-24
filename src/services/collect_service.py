@@ -24,7 +24,7 @@ DATAX_JOBS_PATH = os.environ.get("DATAX_JOBS_PATH", "data/datax/jobs")
 AIRFLOW_DAGS_PATH = os.environ.get("AIRFLOW_DAGS_PATH", "data/airflow/dags")
 
 # 模板文件路径
-TEMPLATES_PATH = os.environ.get("TEMPLATES_PATH", "src/templates")
+TEMPLATES_PATH = os.environ.get("TEMPLATES_PATH", "templates")
 
 # 创建 Jinja2 环境
 jinja_env = Environment(
@@ -71,6 +71,7 @@ class CollectService(CRUD[Collect, CollectCreate, CollectUpdate]):
             "username": database_data.username,
             "password": database_data.password,
             "type": database_data.type,
+            "database": database_data.database,
         }
 
     async def _generate_datax_job_json(
@@ -99,6 +100,7 @@ class CollectService(CRUD[Collect, CollectCreate, CollectUpdate]):
                 "source_username": source_conn_details.get("username"),
                 "source_password": source_conn_details.get("password"),
                 "source_jdbc_url": source_conn_details.get("jdbcUrl"),
+                "source_database": source_conn_details.get("database"),
                 "source_table": collect_data.source_table,
                 "source_columns": ["*"],  # 或者从 collect_data 获取特定列
                 # 写入器配置
@@ -106,6 +108,7 @@ class CollectService(CRUD[Collect, CollectCreate, CollectUpdate]):
                 "target_username": target_conn_details.get("username"),
                 "target_password": target_conn_details.get("password"),
                 "target_jdbc_url": target_conn_details.get("jdbcUrl"),
+                "target_database": target_conn_details.get("database"),
                 "target_table": collect_data.target_table,
                 "target_columns": ["*"],  # 确保与reader端列对应
                 # 预处理SQL

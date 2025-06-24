@@ -18,7 +18,7 @@
                         "connection": [
                             {
                                 "jdbcUrl": ["{{ source_jdbc_url }}"],
-                                "table": ["{{ source_table }}"]
+                                "table": ['"{{ source_database }}".{{ source_table }}']
                             }
                         ],
                         "column": {{ source_columns|tojson }}
