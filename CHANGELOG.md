@@ -3,16 +3,16 @@
 这个项目的所有值得注意的变化都将记录在这个文件中。
 
 这个格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，还有这个原则遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unrelesed]
+## [0.0.2] - 2025-06-24
 
 ### Added
 - 新增 Collect 接口通过 jinja2 对接 Airflow + DATAX 服务
 - 新增 设备状态统计
 - 新增 机器人任务统计、异常数据监控分析、机器人事件 指标
+- 新增 指标查询的安全审计功能
 
 ### Changed
 - 集群设备统计改为 * 5
-
 
 ### Fixed
 - 修复 collects接口某些字段缺失的问题

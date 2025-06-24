@@ -24,6 +24,7 @@ TORTOISE_ORM = {
                 "aerich.models",
                 "models.database",
                 "models.collect",
+                "models.security_audit",
             ],
             "default_connection": "default",
         }
