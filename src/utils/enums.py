@@ -28,3 +28,8 @@ class IndicatorType(str, Enum):
     ABNORMAL_DATA = "异常数据监控分析"
     ROBOT_EVENT = "机器人事件"
     ENVIRONMENT = "环境监测数据"
+
+
+class ExportFormat(str, Enum):
+    CSV = "csv"
+    EXCEL = "excel"

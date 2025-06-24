@@ -1,9 +1,18 @@
 import datetime
+import os
 import random
+import tempfile
+from pathlib import Path
 
+import pandas as pd
 from fastapi import APIRouter, Query
+from fastapi.responses import FileResponse
+from starlette.background import BackgroundTask
 
 from api.v1.enums import IndicatorType
+from schemas.common import Error
+from schemas.metric import MetricExport
+from utils.enums import ExportFormat
 
 router = APIRouter()
 
@@ -331,3 +340,93 @@ async def query_indicator_data(
             "pageSize": page_size,
         },
     }
+
+
+@router.post("/metrics/export", summary="导出指标数据")
+async def export_indicator_data(export_data: MetricExport):
+    """
+    导出指标数据，支持CSV和Excel格式
+    """
+
+    # 调用现有的查询函数获取数据
+    result = await query_indicator_data(
+        start_date=export_data.start_date,
+        end_date=export_data.end_date,
+        vin=export_data.vin,
+        indicator_type=export_data.indicator_type,
+        page=1,
+        page_size=export_data.limit,
+    )
+
+    # 提取数据和列信息
+    records = result["data"]["records"]
+    columns = result["data"]["columns"]
+
+    # 创建列标题映射
+    column_labels = {
+        col_name: col_info["description"] for col_name, col_info in columns.items()
+    }
+
+    # 创建DataFrame并重命名列
+    df = pd.DataFrame(records)
+    df = df.rename(columns=column_labels)
+
+    # 生成文件名
+    base_filename = f"{export_data.indicator_type.value}_{export_data.start_date}_{export_data.end_date}"
+
+    # 创建临时目录用于存储导出文件
+    temp_dir = Path(tempfile.gettempdir()) / "citybrain_exports"
+    os.makedirs(temp_dir, exist_ok=True)
+
+    if export_data.export_format == ExportFormat.CSV:
+        # 创建CSV文件
+        file_path = temp_dir / f"{base_filename}.csv"
+        df.to_csv(file_path, index=False, encoding="utf-8-sig")
+
+        # 直接返回文件
+        return FileResponse(
+            path=file_path,
+            filename=f"{base_filename}.csv",
+            media_type="text/csv",
+            background=BackgroundTask(lambda: os.remove(file_path)),
+        )
+
+    elif export_data.export_format == ExportFormat.EXCEL:
+        # 创建Excel文件
+        file_path = temp_dir / f"{base_filename}.xlsx"
+
+        with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
+            df.to_excel(
+                writer, sheet_name=export_data.indicator_type.value, index=False
+            )
+
+            # 获取xlsxwriter对象进行格式设置
+            workbook = writer.book
+            worksheet = writer.sheets[export_data.indicator_type.value]
+
+            # 设置标题格式
+            header_format = workbook.add_format(
+                {
+                    "bold": True,
+                    "text_wrap": True,
+                    "valign": "top",
+                    "bg_color": "#D9E1F2",
+                    "border": 1,
+                }
+            )
+
+            # 应用格式并调整列宽
+            for col_num, value in enumerate(df.columns.values):
+                worksheet.write(0, col_num, value, header_format)
+                max_len = max(df[value].astype(str).map(len).max(), len(value)) + 2
+                worksheet.set_column(col_num, col_num, min(max_len, 30))  # 最大宽度30
+
+        return FileResponse(
+            path=file_path,
+            filename=f"{base_filename}.xlsx",
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            background=BackgroundTask(lambda: os.remove(file_path)),
+        )
+
+    # 如果代码执行到这里，说明导出格式不支持
+    return Error(msg=f"不支持的导出格式: {export_data.export_format}")
