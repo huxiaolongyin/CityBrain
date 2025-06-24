@@ -3,6 +3,13 @@
 这个项目的所有值得注意的变化都将记录在这个文件中。
 
 这个格式基于 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)，还有这个原则遵循 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [unreleased]
+### Added
+### Changed
+### Fixed
+### Removed
+
 ## [0.0.2] - 2025-06-24
 
 ### Added
@@ -10,6 +17,7 @@
 - 新增 设备状态统计
 - 新增 机器人任务统计、异常数据监控分析、机器人事件 指标
 - 新增 指标查询的安全审计功能
+- 新增 docker容器打包、保存脚本
 
 ### Changed
 - 集群设备统计改为 * 5
@@ -20,8 +28,6 @@
 - 修复 requirements.txt 中缺少 psutil、httpx 的问题
 - 修复 数据采集功能中数据接入的table命名问题，有的要加前缀 database_name，有的不用
 
-
-### Removed
 
 ## [0.0.1] - 2025-05-15
 
