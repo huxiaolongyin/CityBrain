@@ -15,6 +15,7 @@
 ### Fixed
 - 修复 collects接口某些字段缺失的问题
 - 修复 初始化 SQL 脚本问题，去除city_brain创建，已经在docker-compose.yml中创建
+- 修复 requirements.txt 中缺少 psutil、httpx 的问题
 
 
 ### Removed

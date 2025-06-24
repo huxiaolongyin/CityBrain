@@ -5,6 +5,8 @@ fastapi==0.115.12
 uvicorn[standard]
 # apscheduler==3.10.4
 jinja2
+psutil
+httpx
 
 # jwt令牌认证
 python-jose[cryptography]==3.4.0
