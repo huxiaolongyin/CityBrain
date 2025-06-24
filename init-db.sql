@@ -1,6 +1,5 @@
 -- 创建城市大脑应用数据库
-CREATE DATABASE city_brain;
-
+-- CREATE DATABASE city_brain;
 -- 创建设备管理用户
 CREATE USER city_brain
 WITH

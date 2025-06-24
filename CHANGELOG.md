@@ -7,12 +7,15 @@
 
 ### Added
 - 新增 Collect 接口通过 jinja2 对接 Airflow + DATAX 服务
-- 新增 本设备状态统计
+- 新增 设备状态统计 
 
 ### Changed
+- 
 
 ### Fixed
-- 修复collects接口某些字段缺失的问题
+- 修复 collects接口某些字段缺失的问题
+- 修复 初始化 SQL 脚本问题，去除city_brain创建，已经在docker-compose.yml中创建
+
 
 ### Removed
 
