@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   backend:
-    image: citybrain_backend:0.0.2
+    image: citybrain_bigdata:latest
     ports:
       - "8002:8002"
     environment:

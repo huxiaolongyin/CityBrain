@@ -1,7 +1,7 @@
 
 
-IMAGE_NAME = citybrain-backend
-VERSION = 0.0.2
+IMAGE_NAME = citybrain_bigdata
+VERSION = latest
 
 .PHONY: dev
 dev:
