@@ -26,7 +26,7 @@ async def get_cluster_status():
     # 获取存储信息
     disk = psutil.disk_usage("/")
     total_storage_gb = round(disk.total / (1024**3), 2) * 5
-    used_storage_gb = round(disk.used / (1024**3), 2) * 5
+    used_storage_gb = round(disk.used / (1024**3) * 5, 2)
 
     # 如果存储超过1TB，转换为TB单位
     total_storage_str = f"{total_storage_gb}GB"
