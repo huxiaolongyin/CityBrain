@@ -8,6 +8,7 @@
 ### Added
 ### Changed
 ### Fixed
+- 修复 mongodb 的大小写导致的数据采集搜索异常
 ### Removed
 
 ## [0.0.2] - 2025-06-24

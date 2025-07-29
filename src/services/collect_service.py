@@ -36,7 +36,7 @@ jinja_env = Environment(
 
 # 数据库连接器映射
 DATABASE_READER_MAP = {
-    "MongoDB": "mongodbreader",
+    "Mongodb": "mongodbreader",
     "MySQL": "mysqlreader",
     "PostgreSQL": "postgresqlreader",
     "Oracle": "oraclereader",
@@ -44,7 +44,7 @@ DATABASE_READER_MAP = {
     "Dameng": "rdbmsreader",
 }
 DATABASE_WRITER_MAP = {
-    "MongoDB": "mongodbwriter",
+    "Mongodb": "mongodbwriter",
     "MySQL": "mysqlwriter",
     "PostgreSQL": "postgresqlwriter",
     "Oracle": "oraclewriter",

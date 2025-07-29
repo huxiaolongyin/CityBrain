@@ -12,7 +12,7 @@ class Status(int, Enum):
 
 
 class DataSourceType(str, Enum):
-    MONGODB = "MongoDB"
+    MONGODB = "Mongodb"
     MYSQL = "MySQL"
     DM = "DM"
     POSTGRESQL = "PostgreSQL"
