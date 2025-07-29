@@ -25,6 +25,7 @@ TORTOISE_ORM = {
                 "models.database",
                 "models.collect",
                 "models.security_audit",
+                "models.metric",
             ],
             "default_connection": "default",
         }

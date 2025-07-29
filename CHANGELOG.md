@@ -6,6 +6,7 @@
 
 ## [unreleased]
 ### Added
+- 将任务、事件指标改为真实数据
 ### Changed
 ### Fixed
 - 修复 mongodb 的大小写导致的数据采集搜索异常
